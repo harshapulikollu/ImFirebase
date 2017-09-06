@@ -3,8 +3,14 @@ package apps.shark.imfirebase.thread;
 /**
  * Created by Harsha on 9/2/2017.
  */
+import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TextInputEditText;
@@ -14,12 +20,14 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -28,9 +36,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 import apps.shark.imfirebase.BaseActivity;
 import apps.shark.imfirebase.Constants;
@@ -65,10 +77,13 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
     RelativeLayout editorParent;
     @BindView(R.id.activity_thread_progress)
     ProgressBar progress;
+    @BindView(R.id.activity_thread_ic_camera)
+    ImageView camera;
 
     private DatabaseReference mDatabase, mUserDatabase;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private StorageReference mStorage;
 
     @State
     String userUid;
@@ -78,6 +93,7 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
     boolean online_status, app_active;
     private User user;
     private FirebaseUser owner;
+    private ProgressDialog mProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +102,9 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
         Icepick.restoreInstanceState(this, savedInstanceState);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-
+      //to make chat data available offline too
+       // FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        mStorage = FirebaseStorage.getInstance().getReference();
         mDatabase = FirebaseDatabase.getInstance().getReference();
         mDatabase.keepSynced(true);
         if (savedInstanceState == null) {
@@ -201,7 +219,114 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
             }
         });
     }
+    //code for getting photo from gallery with permission when user clicks on camera icon
+    @OnClick(R.id.activity_thread_ic_camera)
+    public void onClickCamera(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { //getting permissions for first time
 
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+
+            } else {
+
+                getPhoto();
+
+            }
+
+        } else {
+
+            getPhoto();
+
+        }
+    }
+
+    //permission for gallery
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 1) {
+
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                getPhoto();
+
+            }
+
+
+        }
+
+    }
+
+    //In order get images from gallery
+    public void getPhoto() {
+        mProgress = new ProgressDialog(this);
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(intent, 1);
+
+
+    }
+    //Result of getting the image into app
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == RESULT_OK && data != null){
+
+            mProgress.setMessage("Sending the image...");
+            mProgress.show();
+            Uri selectedImage = data.getData();
+            Log.d("@@@","imge uri: "+selectedImage);
+
+            final String imageLocation = "Photos" + "/" ;
+            final String imageLocationId = imageLocation + "/" + selectedImage.getLastPathSegment();
+            final String uniqueId = UUID.randomUUID().toString();
+            final StorageReference filepath = mStorage.child(imageLocation).child(uniqueId + "/image_message");
+            final String downloadURl = filepath.getPath();
+            filepath.putFile(selectedImage).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    //create a new message containing this image
+                   // addImageToMessages(downloadURl);
+
+                    Toast.makeText(ThreadActivity.this, downloadURl, Toast.LENGTH_SHORT).show();
+                    Log.d("@@@","downloadurl"+downloadURl);
+                   mProgress.dismiss();
+                    long timestamp = new Date().getTime();
+                    long dayTimestamp = getDayTimestamp(timestamp);
+                    String body = downloadURl; //inputEditText.getText().toString().trim();
+                    String ownerUid = owner.getUid();
+                    String userUid = user.getUid();
+                    if(!body.isEmpty()) {
+                        Message message =
+                                new Message(timestamp, -timestamp, dayTimestamp, body, ownerUid, userUid);
+                        mDatabase
+                                .child("notifications")
+                                .child("messages")
+                                .push()
+                                .setValue(message);
+                        mDatabase
+                                .child("messages")
+                                .child(userUid)
+                                .child(ownerUid)
+                                .push()
+                                .setValue(message);
+                        if (!userUid.equals(ownerUid)) {
+                            mDatabase
+                                    .child("messages")
+                                    .child(ownerUid)
+                                    .child(userUid)
+                                    .push()
+                                    .setValue(message);
+                        }
+                        inputEditText.setText("");
+                    }
+                }
+            });
+        }
+    }
+
+        //code for sending msg when send button clicked
     @OnClick(R.id.activity_thread_send_fab)
     public void onClick() {
         if (user == null || owner == null) {
@@ -276,6 +401,7 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
 
 
     }
+
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {

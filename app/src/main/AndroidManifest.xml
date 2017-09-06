@@ -3,6 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="apps.shark.imfirebase">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -10,15 +18,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".login.LoginActivity" />
+        <activity android:name=".login.LoginActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"/>
 
         <activity
             android:name=".home.MainActivity"
-            android:launchMode="singleTop" />
+            android:launchMode="singleTop"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"/>
 
         <activity
             android:name=".thread.ThreadActivity"
-            android:windowSoftInputMode="adjustResize|stateHidden" />
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"/>
 
         <activity
             android:name=".login.SplashActivity"

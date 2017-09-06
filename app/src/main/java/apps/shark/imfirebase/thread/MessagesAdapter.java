@@ -8,15 +8,20 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.support.transition.TransitionManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.database.Query;
+import com.google.firebase.storage.FirebaseStorage;
 
 import org.joda.time.DateTime;
 import org.joda.time.Days;
@@ -30,6 +35,7 @@ import apps.shark.imfirebase.R;
 import apps.shark.imfirebase.beans.Message;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.view.View.GONE;
@@ -45,6 +51,7 @@ public class MessagesAdapter extends FirebaseRecyclerAdapter<Message, MessagesAd
     private final String ownerUid;
     private final Context context;
     private ArrayList<Integer> selectedPositions;
+    private final String storagelink ="gs://fir-messenger-e2282.appspot.com/";
 
     MessagesAdapter(Context context, String ownerUid, Query ref) {
         super(Message.class, R.layout.item_message_sent, MessageViewHolder.class, ref);
@@ -113,6 +120,8 @@ public class MessagesAdapter extends FirebaseRecyclerAdapter<Message, MessagesAd
         TextView itemMessageBodyTextView;
         @BindView(R.id.item_message_parent)
         LinearLayout itemMessageParent;
+        @BindView(R.id.item_message_body_image_view)
+        ImageView itemMessageBodyImageView;
 
         MessageViewHolder(View itemView) {
             super(itemView);
@@ -123,7 +132,20 @@ public class MessagesAdapter extends FirebaseRecyclerAdapter<Message, MessagesAd
 
         void setMessage(Message message) {
             int viewType = MessagesAdapter.this.getItemViewType(getLayoutPosition());
-            itemMessageBodyTextView.setText(message.getBody());
+            String msg = message.getBody().toString();
+            if(msg.contains("/Photos/")){
+                Log.d("@@@","msg with image "+msg);
+                itemMessageBodyTextView.setVisibility(View.INVISIBLE);
+                itemMessageBodyImageView.setVisibility(VISIBLE);
+                Glide.with(context)
+                        .using(new FirebaseImageLoader())
+                     .load(FirebaseStorage.getInstance()
+                               .getReference().child(message.getBody()))
+                     .into(itemMessageBodyImageView);
+            }else{
+                itemMessageBodyTextView.setText(message.getBody());
+            }
+            //itemMessageBodyTextView.setText(message.getBody());
             boolean shouldHideDate = viewType == VIEW_TYPE_SENT || viewType == VIEW_TYPE_RECEIVED;
             itemMessageDateTextView.setVisibility(shouldHideDate ? GONE : VISIBLE);
             if (!shouldHideDate) {

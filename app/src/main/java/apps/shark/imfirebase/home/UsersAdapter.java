@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+
 import com.google.firebase.database.Query;
 
 import org.greenrobot.eventbus.EventBus;
@@ -28,7 +29,7 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 public class UsersAdapter extends FirebaseRecyclerAdapter<User, UsersAdapter.UserViewHolder> {
 
     private final Context context;
-
+    private User user;
     UsersAdapter(Context context, Query ref) {
         super(User.class, R.layout.item_user, UserViewHolder.class, ref);
         this.context = context;

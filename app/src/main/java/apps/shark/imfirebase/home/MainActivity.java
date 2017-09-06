@@ -72,6 +72,10 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
+        //to make chat data available offline too
+       // FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+
+
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
         initializeFirebaseAuthListener();
