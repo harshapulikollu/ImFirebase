@@ -57,7 +57,7 @@ public class UserProfile extends AppCompatActivity{
                 .into(profileImage);
 
         toolbarTextAppernce();
-        abouttextview.setText(abouttext);
+        abouttextview.setText(abouttext);  
     }
     //private void dynamicToolbarColor() {
 
