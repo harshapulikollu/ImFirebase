@@ -20,6 +20,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -47,6 +48,7 @@ import java.util.UUID;
 import apps.shark.imfirebase.BaseActivity;
 import apps.shark.imfirebase.Constants;
 import apps.shark.imfirebase.R;
+import apps.shark.imfirebase.activities.UserProfile;
 import apps.shark.imfirebase.beans.Message;
 import apps.shark.imfirebase.beans.User;
 import apps.shark.imfirebase.login.LoginActivity;
@@ -78,7 +80,7 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
     @BindView(R.id.activity_thread_progress)
     ProgressBar progress;
     @BindView(R.id.activity_thread_ic_camera)
-    ImageView camera;
+    ImageButton camera;
 
     private DatabaseReference mDatabase, mUserDatabase;
     private FirebaseAuth mAuth;
@@ -102,7 +104,7 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
         Icepick.restoreInstanceState(this, savedInstanceState);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-      //to make chat data available offline too
+                        //Todo: make chat data available offline too
        // FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         mStorage = FirebaseStorage.getInstance().getReference();
         mDatabase = FirebaseDatabase.getInstance().getReference();
@@ -218,6 +220,18 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
                 messagesRecycler.smoothScrollToPosition(0);
             }
         });
+    }
+    @OnClick(R.id.activity_thread_toolbar)
+    public  void onClickToolbar(){
+        String username = user.getDisplayName().toString();
+        String picurl = user.getPhotoUrl();
+        String email = user.getEmail();
+        Log.i("@@@","picurl"+picurl);
+        Intent userProfile = new Intent(this, UserProfile.class);
+        userProfile.putExtra("username",username);
+        userProfile.putExtra("picurl",picurl);
+        userProfile.putExtra("email",email);
+        startActivity(userProfile);
     }
     //code for getting photo from gallery with permission when user clicks on camera icon
     @OnClick(R.id.activity_thread_ic_camera)
@@ -390,7 +404,7 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
     }
 
     private void displayUserDetails() {
-        //todo[improvement]: maybe display the picture in the toolbar.. WhatsApp style
+        //TODO[improvement]: maybe display the picture in the toolbar.. WhatsApp style
         toolbar.setTitle(user.getDisplayName());
         if(online_status == (true)){
             toolbar.setSubtitle("Online");
@@ -405,11 +419,17 @@ public class ThreadActivity extends BaseActivity implements TextWatcher {
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+///TODO: disable fab send button disabled
 
     }
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
+//TODO: disable send button enable
+          camera.setVisibility(INVISIBLE);
+        if(inputEditText.getText().toString().isEmpty()){
+            camera.setVisibility(VISIBLE);
+        }
 
     }
 

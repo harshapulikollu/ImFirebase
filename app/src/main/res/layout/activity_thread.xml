@@ -75,20 +75,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_margin="@dimen/simple_padding_small"
                 android:layout_toStartOf="@id/activity_thread_send_fab"
                 android:background="@drawable/chip_chat"
                 android:hint="@string/hint_message"
                 android:inputType="textCapSentences|textMultiLine"
                 android:padding="@dimen/simple_padding_largish"
                 android:textColor="@color/colorTextPrimary"
-                android:textSize="@dimen/text_size_secondary"/>
+                android:textSize="@dimen/text_size_secondary"
 
-            <ImageView
+                android:layout_marginLeft="@dimen/simple_padding_small"
+                android:layout_marginRight="@dimen/simple_padding_small"
+                android:layout_marginTop="@dimen/simple_padding_small"
+                android:layout_marginBottom="@dimen/simple_padding_small" />
+
+            <ImageButton
                 android:id="@+id/activity_thread_ic_camera"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_camera"
+                android:background="@drawable/chip_chat"
                 android:layout_centerVertical="true"
                 android:layout_alignEnd="@+id/activity_thread_input_edit_text"
                 android:layout_marginEnd="12dp" />
